@@ -2,7 +2,7 @@
 
 ### Live Demo
 
-
+https://fccimgsrch.herokuapp.com/
 
 ### User stories:
 
@@ -10,4 +10,16 @@
  *   I can paginate through the responses by adding a parameter to the URL
  *   I can get a list of the most recently submitted search strings.
 
-### Usage
+### Example Usage
+
+#### Search
+
+https://fccimgsrch.herokuapp.com/api/search/puppers
+
+#### Paged Search
+
+https://fccimgsrch.herokuapp.com/api/search/puppers?page=2
+
+#### Latest Searches
+
+https://fccimgsrch.herokuapp.com/api/latest
