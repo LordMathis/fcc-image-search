@@ -1,12 +1,6 @@
 var mongoose = require('mongoose');
 
-var mongoUrl = process.env.MONGOLAB_URI || 'mongodb://localhost:27017/imgsearch';
-mongoose.connect(mongoUrl, { useMongoClient: true });
-mongoose.Promise = Promise;
-
-var db = mongoose.connection;
-
-// User Schema
+// History Schema
 var HistorySchema = mongoose.Schema({
 	search: {
 		type: String
@@ -18,10 +12,12 @@ var HistorySchema = mongoose.Schema({
 
 var History = module.exports = mongoose.model('History', HistorySchema);
 
+// Save function
 module.exports.saveQuery = function(query, callback){
 	query.save(callback);
 }
 
+// Get latest search queries
 module.exports.getLatest = function(callback){
 	History.find({}).sort({'_id': 1}).limit(10).exec(callback);
 }

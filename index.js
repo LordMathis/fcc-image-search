@@ -1,22 +1,32 @@
 var express = require('express');
 var path = require('path');
-var History = require('./models/history');
 var GoogleImages = require('google-images');
+var mongoose = require('mongoose');
 
+var History = require('./models/history');
+
+// Set up google image search
 var client = new GoogleImages(process.env.CSE, process.env.API);
-var app = express();
 
+// Set up express
+var app = express();
 app.set('views', path.join(__dirname, '/views'));
 app.engine('md', require('marked-engine').renderFile);
 app.set('view engine', 'md');
 app.set('port', (process.env.PORT || 5000));
 
-var baseUrl = process.env.BASE_URL || 'localhost:' + app.get('port');
+// Set up mongoose
+var mongoUrl = process.env.MONGOLAB_URI || 'mongodb://localhost:27017/imgsearch';
+mongoose.connect(mongoUrl, { useMongoClient: true });
+mongoose.Promise = Promise;
+var conn = mongoose.connection;
 
+// Render index page
 app.get('/', (req,res) => {
   res.render('index');
 });
 
+// Get latest search queries
 app.get('/api/latest', (req, res) => {
   History.getLatest((err, data) => {
     if (err) console.log(err);
@@ -30,11 +40,15 @@ app.get('/api/latest', (req, res) => {
   });
 });
 
+// Search for an image and save the search query
 app.get('/api/search/:query', (req, res) => {
   var query = req.params.query;
-  var page = req.query.page || 1;
+  var page = req.query.page || 1; // paginate
 
+  // Search with google image search
   client.search(query, {page: page}).then(images => {
+
+    // Create and save search query object
     var history = new History({
       "search": query,
       "timestamp": new Date().toLocaleString()
@@ -42,6 +56,8 @@ app.get('/api/search/:query', (req, res) => {
     History.saveQuery(history, (err) => {
       if (err) console.log(err);
     })
+
+    // Send search results
     res.json(images.map((image) => {
       return {
         "url": image.url,
@@ -53,6 +69,11 @@ app.get('/api/search/:query', (req, res) => {
   });
 });
 
-app.listen(app.get('port'), () => {
-  console.log('Server is running on port', app.get('port'));
+conn.on('error', console.error.bind(console, 'connection error:'));
+
+// Start the app once the connection to mongodb is established
+conn.once('open', function() {
+  app.listen(app.get('port'), () => {
+    console.log('Server is running on port', app.get('port'));
+  });
 });
